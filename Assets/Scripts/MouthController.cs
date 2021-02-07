@@ -57,10 +57,13 @@ public class MouthController : MonoBehaviour
 
                 //////
                 DateTime now = System.DateTime.Now;
-                double timeDiff = (now - dateTimes[i]).TotalMilliseconds;
-                i++;
-                timeDiffs[i] = timeDiff;
+                if(i==0){
+                    timeDiffs[i] = (now - dateTimes[0]).TotalSeconds;
+                }else{
+                    timeDiffs[i] = (now - dateTimes[i-1]).TotalSeconds;
+                }
                 dateTimes[i] = now;
+                i++;
             }else{
                 Restart();
             }
@@ -120,14 +123,16 @@ public class MouthController : MonoBehaviour
         Debug.Log("VoiceRecording....");
         recording = !recording;
 
-        if(recording){
-            Debug.Log("recording....");
-            audioSource = GetComponent<AudioSource> ();
-            audioSource.clip = Microphone.Start("Built-in Audio Analog Stereo", true, 10, 44100); 
-
+        if(recording){ 
             // start timer
             dateTimes[0] = System.DateTime.Now;
             timeDiffs[0] = 0;
+
+            Debug.Log("recording....");
+            audioSource = GetComponent<AudioSource> ();
+            audioSource.clip = Microphone.Start("Built-in Audio Analog Stereo", true, 10, 44100);
+
+            dateTimes[0] = System.DateTime.Now;
 
         }else{
             Debug.Log("playing....");
@@ -143,11 +148,16 @@ public class MouthController : MonoBehaviour
     private IEnumerator Replay(){
         Restart();
         foreach (var timeDiff in timeDiffs) {
+            Debug.Log((float)timeDiff);
+            yield return new WaitForSeconds((float)timeDiff);
+
             if(i < v.Length){
+                // Debug.Log(i);
+                // Debug.Log(v[i]);
+                // Debug.Log(timeDiff);
+                // Debug.Log("____________________________");
                 ChangeImage(v[i]);
             }
-            
-            yield return new WaitForSeconds(1f);
             i++;
         }
     }
