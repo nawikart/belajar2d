@@ -28,12 +28,14 @@ public class MouthController : MonoBehaviour
 
     public Button btnVoiceRecording;
     public Button btnRestart;
-    
-    DateTime[] dateTimes = new DateTime[20];
-    double[] timeDiffs = new double[20];
+    public Button btnReplay;
+
+    DateTime[] dateTimes = new DateTime[30];
+    double[] timeDiffs = new double[30];
 
     int i = 0;
-    string[] v = { "A", "A", "U", "A", "I", "A", "U", "E", "A", "A", "A", "I", "A", "I" };
+    string[] v = { "A", "A", "U", "A", "I", "A", "U", "E", "A", "A", "A", "I", "A", "I", "A", "U", "U", "A", "A", "A", "U", "A", "U", "E", "E", "A" };
+    // namaku nawi aku berasal dari bali aku suka makan rujak super pedas
 
     private void Start()
     {
@@ -47,6 +49,7 @@ public class MouthController : MonoBehaviour
 
         btnVoiceRecording.onClick.AddListener(delegate { VoiceRecording(); });
         btnRestart.onClick.AddListener(delegate { Restart(); });
+        btnReplay.onClick.AddListener(delegate { StartCoroutine(Replay()); });
     }
 
     private void Update() {
@@ -54,20 +57,28 @@ public class MouthController : MonoBehaviour
         if (Input.GetKeyDown("space")) {
             if(v.Length > i){
                 ChangeImage(v[i]);
+                recordMouthChanges();
 
-                //////
-                DateTime now = System.DateTime.Now;
-                if(i==0){
-                    timeDiffs[i] = (now - dateTimes[0]).TotalSeconds;
-                }else{
-                    timeDiffs[i] = (now - dateTimes[i-1]).TotalSeconds;
-                }
-                dateTimes[i] = now;
-                i++;
-            }else{
+            }
+            else{
                 Restart();
             }
         }
+    }
+
+    private void recordMouthChanges()
+    {
+        DateTime now = System.DateTime.Now;
+        if (i == 0)
+        {
+            timeDiffs[i] = (now - dateTimes[0]).TotalSeconds;
+        }
+        else
+        {
+            timeDiffs[i] = (now - dateTimes[i - 1]).TotalSeconds;
+        }
+        dateTimes[i] = now;
+        i++;
     }
 
     private void Restart() {
@@ -76,14 +87,16 @@ public class MouthController : MonoBehaviour
     }
 
     // ---- This is to change Image/Mouth by catch keyCode from keyBoard
-    // private void OnGUI() {
-    //     Event e = Event.current;
-    //     string[] vocals = { "A", "I", "U", "E", "O" };
+    //private void OnGUI()
+    //{
+    //    event e = event.current;
+    //    string[] vocals = { "a", "i", "u", "e", "o" };
 
-    //     if (e.type == EventType.KeyDown && e.keyCode.ToString().Length == 1 ) {  
-    //         ChangeImage(e.keyCode.ToString());
-    //     }
-    // }
+    //    if (e.type == eventtype.keydown && e.keycode.tostring().length == 1 ) {  
+    //         changeimage(e.keycode.tostring());
+    //        recordMouthChanges();
+    //    }
+    //}
 
     private void ChangeImage(string keyCode)
     {
@@ -130,15 +143,13 @@ public class MouthController : MonoBehaviour
 
             Debug.Log("recording....");
             audioSource = GetComponent<AudioSource> ();
-            audioSource.clip = Microphone.Start("Built-in Audio Analog Stereo", true, 10, 44100);
+            audioSource.clip = Microphone.Start("Microphone (High Definition Audio Device)", true, 60, 44100); // <-- windows 10 PC
+            // audioSource.clip = Microphone.Start("Built-in Audio Analog Stereo", true, 10, 44100); // <-- linux laptop
 
             dateTimes[0] = System.DateTime.Now;
 
         }else{
-            Debug.Log("playing....");
-            audioSource.Play();
-            Microphone.End("Built-in Audio Analog Stereo");  
-
+            Microphone.End("Built-in Audio Analog Stereo");
             StartCoroutine(Replay());        
         }   
     }
@@ -146,7 +157,9 @@ public class MouthController : MonoBehaviour
 
     // Replay mouth
     private IEnumerator Replay(){
+        Debug.Log("playing....");
         Restart();
+        audioSource.Play();
         foreach (var timeDiff in timeDiffs) {
             Debug.Log((float)timeDiff);
             yield return new WaitForSeconds((float)timeDiff);
